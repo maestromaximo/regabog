@@ -1,0 +1,8 @@
+openai
+Django
+langchain
+python-dotenv
+PyPDF2
+python-magic
+tqdm
+autogen-agentchat~=0.2

@@ -1,0 +1,53 @@
+<nav class="bg-white border-b border-gray-200">
+    <div class="container mx-auto px-4">
+        <div class="flex justify-between items-center h-16">
+            <div class="flex items-center">
+                <a href="{% url 'lawyer:home' %}" class="text-xl font-bold text-primary flex items-center">
+                    <svg class="w-8 h-8 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                    </svg>
+                    Regabog
+                </a>
+            </div>
+            
+            <!-- Mobile menu button -->
+            <div class="md:hidden">
+                <button type="button" class="mobile-menu-button p-2 rounded-md text-gray-600 hover:text-primary focus:outline-none">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Desktop menu -->
+            <div class="hidden md:flex md:items-center md:space-x-8">
+                <a href="{% url 'lawyer:home' %}" class="text-gray-600 hover:text-primary transition-colors">Home</a>
+                <a href="{% url 'lawyer:chat' %}" class="text-gray-600 hover:text-primary transition-colors">AI Consultation</a>
+                <a href="{% url 'lawyer:configure' %}" class="text-gray-600 hover:text-primary transition-colors">Configure</a>
+                <a href="{% url 'lawyer:chat' %}" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors">
+                    Start Chat
+                </a>
+            </div>
+        </div>
+
+        <!-- Mobile menu -->
+        <div class="hidden mobile-menu md:hidden">
+            <div class="px-2 pt-2 pb-3 space-y-1">
+                <a href="{% url 'lawyer:home' %}" class="block px-3 py-2 text-gray-600 hover:text-primary transition-colors">Home</a>
+                <a href="{% url 'lawyer:chat' %}" class="block px-3 py-2 text-gray-600 hover:text-primary transition-colors">AI Consultation</a>
+                <a href="{% url 'lawyer:configure' %}" class="block px-3 py-2 text-gray-600 hover:text-primary transition-colors">Configure</a>
+                <a href="{% url 'lawyer:chat' %}" class="block px-3 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors mt-4">Start Chat</a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<script>
+    // Mobile menu toggle
+    const mobileMenuButton = document.querySelector('.mobile-menu-button');
+    const mobileMenu = document.querySelector('.mobile-menu');
+
+    mobileMenuButton.addEventListener('click', () => {
+        mobileMenu.classList.toggle('hidden');
+    });
+</script> 

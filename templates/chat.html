@@ -1,0 +1,319 @@
+{% extends 'base.html' %}
+
+{% block title %}Legal AI Chat - Regabog{% endblock %}
+
+{% block content %}
+<div class="min-h-[calc(100vh-4rem)] bg-gray-50">
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-7xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden">
+            <div class="bg-primary text-white p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-2xl font-bold">Legal AI Assistant</h1>
+                        <p class="text-primary-100">Powered by advanced AI for accurate legal insights</p>
+                    </div>
+                    <button id="new-chat-btn" class="bg-white/10 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition-colors">
+                        New Chat
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex h-[calc(100vh-16rem)]">
+                <!-- Left Sidebar: Conversations -->
+                <div class="w-64 border-r border-gray-200 flex flex-col">
+                    <div class="p-4">
+                        <h2 class="text-lg font-semibold text-gray-700 mb-4">Conversations</h2>
+                        <div class="space-y-2">
+                            {% for conversation in conversations %}
+                            <button 
+                                class="w-full text-left px-4 py-3 rounded-lg {% if conversation.id == current_conversation.id %}bg-primary/5 text-primary{% else %}text-gray-600 hover:bg-gray-100{% endif %} transition-colors"
+                                data-conversation-id="{{ conversation.id }}"
+                            >
+                                {{ conversation.title }}
+                                <p class="text-sm text-gray-500">{{ conversation.updated_at|timesince }} ago</p>
+                            </button>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Chat Area -->
+                <div class="flex-1 flex flex-col">
+                    <div id="messages-container" class="flex-1 overflow-y-auto p-6 space-y-6">
+                        {% for message in messages %}
+                            {% if message.message_type == 'system' %}
+                                <div class="flex items-start space-x-4">
+                                    <div class="flex-shrink-0">
+                                        <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+                                            <span class="text-xs font-medium text-gray-500">{{ message.metadata.sender|slice:":2" }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="bg-gray-50 rounded-2xl p-4">
+                                            <p class="text-sm font-medium text-gray-500 mb-1">{{ message.metadata.sender }}</p>
+                                            <p class="text-gray-700">{{ message.content }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% elif message.message_type == 'assistant' %}
+                                <div class="flex items-start space-x-4">
+                                    <div class="flex-shrink-0">
+                                        <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                            <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="bg-gray-50 rounded-2xl p-4 text-gray-700">
+                                            <p>{{ message.content }}</p>
+                                            {% if message.referenced_documents.exists %}
+                                                <div class="mt-4 pt-4 border-t border-gray-200">
+                                                    <p class="text-sm font-medium text-gray-500 mb-2">Referenced Documents:</p>
+                                                    <div class="space-y-2">
+                                                        {% for doc in message.referenced_documents.all %}
+                                                            <div class="bg-white p-3 rounded-lg border border-gray-200">
+                                                                <p class="font-medium text-gray-700">{{ doc.filename }}</p>
+                                                                <p class="text-sm text-gray-500">{{ doc.description|truncatechars:100 }}</p>
+                                                            </div>
+                                                        {% endfor %}
+                                                    </div>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <div class="flex items-start space-x-4 justify-end">
+                                    <div class="flex-1">
+                                        <div class="bg-primary text-white rounded-2xl p-4 ml-12">
+                                            <p>{{ message.content }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+
+                    <div class="border-t border-gray-200 p-4">
+                        <div class="max-w-4xl mx-auto">
+                            <form id="chat-form" class="flex items-center space-x-4">
+                                <div class="flex-1 relative">
+                                    <input type="text" 
+                                           id="message-input"
+                                           class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                                           placeholder="Type your legal question here...">
+                                </div>
+                                <button type="submit" 
+                                        class="bg-primary text-white px-6 py-3 rounded-xl hover:bg-primary/90 transition-colors flex items-center">
+                                    <span>Send</span>
+                                    <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                    </svg>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Sidebar: Case Information -->
+                <div class="w-80 border-l border-gray-200 bg-gray-50 overflow-y-auto">
+                    <div class="p-4">
+                        <h2 class="text-lg font-semibold text-gray-700 mb-4">Case Information</h2>
+                        {% if current_conversation.case %}
+                            <div class="bg-white rounded-xl p-4 shadow-sm">
+                                <h3 class="font-medium text-gray-900">{{ current_conversation.case.title }}</h3>
+                                <p class="text-sm text-gray-500 mt-1">{{ current_conversation.case.description }}</p>
+                                
+                                {% if current_conversation.case.documents.exists %}
+                                    <div class="mt-4 pt-4 border-t border-gray-200">
+                                        <h4 class="text-sm font-medium text-gray-700 mb-2">Case Documents</h4>
+                                        <div class="space-y-2">
+                                            {% for doc in current_conversation.case.documents.all %}
+                                                <div class="bg-gray-50 p-3 rounded-lg">
+                                                    <p class="font-medium text-gray-700">{{ doc.filename }}</p>
+                                                    <p class="text-sm text-gray-500">{{ doc.description|truncatechars:100 }}</p>
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                {% endif %}
+
+                                <div class="mt-4 pt-4 border-t border-gray-200">
+                                    <p class="text-sm text-gray-500">Status: <span class="font-medium">{{ current_conversation.case.status }}</span></p>
+                                    <p class="text-sm text-gray-500">Created: {{ current_conversation.case.created_at|date:"M d, Y" }}</p>
+                                </div>
+                            </div>
+                        {% else %}
+                            <p class="text-gray-500">No case associated with this conversation.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('chat-form');
+    const input = document.getElementById('message-input');
+    const messagesContainer = document.getElementById('messages-container');
+    const newChatBtn = document.getElementById('new-chat-btn');
+    let currentConversationId = '{{ current_conversation.id }}';
+    
+    // Get CSRF token from cookie
+    function getCsrfToken() {
+        const name = 'csrftoken';
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Add CSRF token to all fetch requests
+    const csrfToken = getCsrfToken();
+    const fetchWithCsrf = (url, options = {}) => {
+        return fetch(url, {
+            ...options,
+            headers: {
+                ...options.headers,
+                'X-CSRFToken': csrfToken,
+            },
+        });
+    };
+
+    // Handle conversation switching
+    document.querySelectorAll('[data-conversation-id]').forEach(button => {
+        button.addEventListener('click', async () => {
+            const conversationId = button.dataset.conversationId;
+            if (conversationId === currentConversationId) return;
+
+            try {
+                const response = await fetchWithCsrf(`/chat/${conversationId}/`);
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    // Update messages
+                    messagesContainer.innerHTML = '';
+                    data.messages.forEach(message => {
+                        appendMessage(message.content, message.message_type === 'user');
+                    });
+                    
+                    // Update active state
+                    document.querySelector(`[data-conversation-id="${currentConversationId}"]`)
+                        ?.classList.remove('bg-primary/5', 'text-primary');
+                    button.classList.add('bg-primary/5', 'text-primary');
+                    currentConversationId = conversationId;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+    });
+
+    // Handle new chat
+    newChatBtn.addEventListener('click', async () => {
+        try {
+            const response = await fetchWithCsrf('/chat/new/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                window.location.reload();
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    });
+
+    function scrollToBottom() {
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    function appendMessage(content, isUser = false) {
+        const messageHtml = isUser ? `
+            <div class="flex items-start space-x-4 justify-end">
+                <div class="flex-1">
+                    <div class="bg-primary text-white rounded-2xl p-4 ml-12">
+                        <p>${content}</p>
+                    </div>
+                </div>
+            </div>
+        ` : `
+            <div class="flex items-start space-x-4">
+                <div class="flex-shrink-0">
+                    <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="flex-1">
+                    <div class="bg-gray-50 rounded-2xl p-4 text-gray-700">
+                        <p>${content}</p>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        messagesContainer.insertAdjacentHTML('beforeend', messageHtml);
+        scrollToBottom();
+    }
+
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const message = input.value.trim();
+        if (!message) return;
+
+        // Clear input
+        input.value = '';
+
+        // Append user message
+        appendMessage(message, true);
+
+        try {
+            const response = await fetchWithCsrf('{% url "lawyer:send_message" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    conversation_id: currentConversationId,
+                    message: message
+                })
+            });
+
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                appendMessage(data.response.content);
+            } else {
+                appendMessage('Sorry, there was an error processing your request.', false);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            appendMessage('Sorry, there was an error processing your request.', false);
+        }
+    });
+
+    // Initial scroll to bottom
+    scrollToBottom();
+});
+</script>
+{% endblock %} 

@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+
+{% block title %}Configure Knowledge Base - Regabog{% endblock %}
+
+{% block content %}
+<div class="min-h-[calc(100vh-4rem)] bg-gray-50">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Configuration Interface Container -->
+        <div class="max-w-6xl mx-auto">
+            <!-- Header -->
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold text-primary mb-2">Knowledge Base Configuration</h1>
+                <p class="text-gray-600">Upload and manage your legal documents to enhance the AI's understanding</p>
+            </div>
+
+            <!-- Main Content Grid -->
+            <div class="grid md:grid-cols-1 gap-8">
+                <!-- Upload Section -->
+                <div class="space-y-6">
+                    <!-- Upload Box -->
+                    <div class="bg-white rounded-2xl shadow-xl p-6">
+                        <form id="upload-form" class="hidden">
+                            <input type="file" id="file-input" name="files[]" multiple accept=".pdf" class="hidden">
+                        </form>
+                        <div id="drop-zone" class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center">
+                            <div class="mb-4">
+                                <svg class="w-12 h-12 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                                </svg>
+                            </div>
+                            <h3 class="text-lg font-semibold text-gray-700 mb-2">Drop files here or click to upload</h3>
+                            <p class="text-gray-500 mb-4">Support for PDF files</p>
+                            <button type="button" id="select-files-btn" class="bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary/90 transition-colors">
+                                Select Files
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Uploaded Documents -->
+                    <div class="bg-white rounded-2xl shadow-xl p-6">
+                        <h2 class="text-xl font-semibold text-gray-700 mb-4">Uploaded Documents</h2>
+                        <div id="document-list" class="space-y-4">
+                            {% for document in documents %}
+                            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl" data-document-id="{{ document.id }}">
+                                <div class="flex items-center space-x-4">
+                                    <div class="bg-primary/10 p-3 rounded-lg">
+                                        <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-semibold text-gray-700">{{ document.filename }}</h3>
+                                        <p class="text-sm text-gray-500">Uploaded {{ document.created_at|timesince }} ago</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <button class="delete-document p-2 text-gray-400 hover:text-red-500 transition-colors">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('file-input');
+    const uploadForm = document.getElementById('upload-form');
+    const dropZone = document.getElementById('drop-zone');
+    const selectFilesBtn = document.getElementById('select-files-btn');
+    const documentList = document.getElementById('document-list');
+
+    // Handle file selection button
+    selectFilesBtn.addEventListener('click', () => {
+        fileInput.click();
+    });
+
+    // Handle file input change
+    fileInput.addEventListener('change', handleFiles);
+
+    // Handle drag and drop
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropZone.classList.add('border-primary');
+    });
+
+    dropZone.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropZone.classList.remove('border-primary');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropZone.classList.remove('border-primary');
+        const files = e.dataTransfer.files;
+        handleFiles({ target: { files } });
+    });
+
+    async function handleFiles(event) {
+        const files = Array.from(event.target.files);
+        const formData = new FormData();
+        
+        files.forEach(file => {
+            formData.append('files[]', file);
+        });
+
+        try {
+            const response = await fetch('{% url "lawyer:upload_documents" %}', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+            
+            if (result.status === 'success' || result.status === 'partial_success') {
+                // Refresh the page to show new documents
+                location.reload();
+            } else {
+                alert(result.message);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Failed to upload files');
+        }
+
+        // Reset the file input
+        uploadForm.reset();
+    }
+});
+</script>
+{% endblock %} 
